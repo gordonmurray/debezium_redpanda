@@ -1,5 +1,7 @@
 # CDC using Debezium and RedPanda
 
+A simple docker compose example that runs MariaDB, Debezium, RedPanda and RedPanda Console for testing out various Debezium connector options
+
 Start the containers:
 
 ```
