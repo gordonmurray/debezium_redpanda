@@ -35,3 +35,6 @@ curl localhost:8083/connectors/my_database/status
 The UI for RedPanda Console will be available at http://localhost:8080
 
 You'll see some topics created in the UI, such as `testing.mydatabase.products-value`
+
+![Debezium and Redpanda Console](./files/redpanda_console.png)
+
