@@ -1,0 +1,61 @@
+version: '3.7'
+
+services:
+
+  mariadb:
+    image: mariadb:10.6.14
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - ./files/mariadb.cnf:/etc/mysql/mariadb.conf.d/mariadb.cnf
+      - ./files/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+
+  debezium:
+    image: debezium/connect:latest
+    container_name: debezium
+    depends_on:
+      - mariadb
+      - redpanda
+    environment:
+          BOOTSTRAP_SERVERS: redpanda:9092
+          CONFIG_STORAGE_TOPIC: connect-configs
+          OFFSET_STORAGE_TOPIC: connect-offsets
+    volumes:
+      - ./files/connector.json/:/kafka/connector.json
+      - ./files/avro-1.11.3.jar/:/kafka/connect/avro-1.11.3.jar
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_BROKERS: "redpanda:9092"
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    depends_on:
+      - redpanda
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.9
+    command:
+      - redpanda start
+      - --overprovisioned
+      - --smp 1
+      - --memory 1G
+      - --reserve-memory 0M
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092" # Kafka port
+      - "8081:8081" # If using Redpanda's schema registry
+      - "8082:8082" # If using Pandaproxy
+      - "8083:8083" # If using Kafka Connect
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
+volumes:
+  redpanda_data:
